@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>晚霞专注钟</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #2b1055 0%, #7597de 30%, #ff9a76 62%, #ff6b6b 82%, #845ec2 100%);
+    color: #fff; overflow: hidden;
+  }
+  .sun {
+    width: 150px; height: 150px; border-radius: 50%;
+    background: radial-gradient(circle, #ffd93d 0%, #ff9a3d 70%, #ff7b3d 100%);
+    box-shadow: 0 0 80px 30px rgba(255, 170, 60, .45);
+    margin-bottom: 28px; transition: transform 1s ease;
+  }
+  h1 { font-size: 30px; letter-spacing: 6px; font-weight: 600; text-shadow: 0 2px 12px rgba(0,0,0,.3); }
+  .sub { margin-top: 8px; font-size: 14px; opacity: .85; letter-spacing: 2px; }
+  .clock {
+    margin: 34px 0 8px; font-size: 92px; font-weight: 200;
+    font-variant-numeric: tabular-nums; letter-spacing: 4px;
+    text-shadow: 0 4px 24px rgba(0,0,0,.35);
+  }
+  .phase { font-size: 15px; letter-spacing: 3px; opacity: .9; height: 22px; }
+  .btns { margin-top: 30px; display: flex; gap: 14px; }
+  button {
+    padding: 12px 30px; font-size: 16px; letter-spacing: 2px; cursor: pointer;
+    color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.55);
+    border-radius: 999px; backdrop-filter: blur(4px); transition: background .2s;
+  }
+  button:hover { background: rgba(255,255,255,.3); }
+  .modes { margin-top: 20px; display: flex; gap: 10px; }
+  .modes button { padding: 7px 16px; font-size: 13px; }
+  .modes button.on { background: rgba(255,255,255,.42); }
+  .count { margin-top: 26px; font-size: 13px; opacity: .8; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+  <div class="sun" id="sun"></div>
+  <h1>晚霞专注钟</h1>
+  <div class="sub">太阳不落山，专注不打烊</div>
+  <div class="clock" id="clock">25:00</div>
+  <div class="phase" id="phase">准备开始</div>
+  <div class="btns">
+    <button id="toggle">开始专注</button>
+    <button id="reset">重置</button>
+  </div>
+  <div class="modes">
+    <button data-min="25" class="on">专注 25 分钟</button>
+    <button data-min="15">专注 15 分钟</button>
+    <button data-min="5">休息 5 分钟</button>
+  </div>
+  <div class="count" id="count">今天已完成 0 次专注</div>
+<script>
+  var total = 25 * 60, left = total, timer = null, done = 0;
+  var clock = document.getElementById('clock'), phase = document.getElementById('phase'),
+      toggle = document.getElementById('toggle'), sun = document.getElementById('sun'),
+      count = document.getElementById('count');
+  var KEY = 'dusk-focus-' + new Date().toDateString();
+  done = parseInt(localStorage.getItem(KEY) || '0', 10);
+  count.textContent = '今天已完成 ' + done + ' 次专注';
+  function fmt(s) { return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+  function render() {
+    clock.textContent = fmt(left);
+    var p = 1 - left / total;
+    sun.style.transform = 'translateY(' + (p * 46) + 'px) scale(' + (1 - p * 0.12) + ')';
+  }
+  function stop(txt) { clearInterval(timer); timer = null; toggle.textContent = '开始专注'; if (txt) phase.textContent = txt; }
+  toggle.onclick = function () {
+    if (timer) { stop('已暂停'); return; }
+    phase.textContent = '专注进行中…';
+    toggle.textContent = '暂停';
+    timer = setInterval(function () {
+      left--; render();
+      if (left <= 0) {
+        stop('这一轮完成了，抬头看看晚霞吧');
+        if (total >= 15 * 60) { done++; localStorage.setItem(KEY, String(done)); count.textContent = '今天已完成 ' + done + ' 次专注'; }
+        left = total; render();
+      }
+    }, 1000);
+  };
+  document.getElementById('reset').onclick = function () { stop('准备开始'); left = total; render(); };
+  document.querySelectorAll('.modes button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('.modes button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); total = parseInt(b.dataset.min, 10) * 60;
+      stop('准备开始'); left = total; render();
+    };
+  });
+  render();
+</script>
+</body>
+</html>
